@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小学英语单词测试</title>
+<style>
+  :root{
+    --bg1:#a1c4fd; --bg2:#c2e9fb; --bg3:#fbc2eb;
+    --primary:#6c5ce7; --primary-d:#5641e0;
+    --green:#22c55e; --green-d:#16a34a;
+    --red:#ef4444; --red-d:#dc2626;
+    --orange:#f59e0b;
+    --ink:#1f2937; --muted:#6b7280;
+    --card:#ffffff;
+    --radius:20px;
+    --shadow:0 10px 30px rgba(31,41,55,.12);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    color:var(--ink);
+    background:linear-gradient(135deg,var(--bg1),var(--bg2) 45%,var(--bg3));
+    background-attachment:fixed;
+    min-height:100vh;
+    line-height:1.5;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:22px 16px 60px;}
+  header.top{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    margin-bottom:18px;flex-wrap:wrap;
+  }
+  .title{font-size:1.7rem;font-weight:800;letter-spacing:.5px;display:flex;align-items:center;gap:10px;}
+  .title .logo{
+    width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:1.5rem;
+    background:linear-gradient(135deg,#ffd86b,#fc6262);box-shadow:var(--shadow);
+  }
+  .btn{
+    border:0;cursor:pointer;font-family:inherit;font-weight:700;border-radius:14px;
+    padding:12px 20px;font-size:1rem;background:#fff;color:var(--ink);
+    box-shadow:var(--shadow);transition:transform .08s ease,box-shadow .2s ease,opacity .2s;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn:active{transform:translateY(1px);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+  .btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;}
+  .btn.green{background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;}
+  .btn.ghost{background:rgba(255,255,255,.7);backdrop-filter:blur(4px);}
+  .btn.danger{background:linear-gradient(135deg,#fb7185,var(--red-d));color:#fff;}
+  .btn.lg{padding:16px 26px;font-size:1.1rem;border-radius:16px;}
+
+  /* screens */
+  .screen{display:none;animation:fade .25s ease;}
+  .screen.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  .hint{color:var(--muted);font-size:.95rem;margin:2px 0 0;}
+
+  /* home grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin-top:8px;}
+  .card{
+    background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:18px;cursor:pointer;position:relative;overflow:hidden;
+    transition:transform .12s ease,box-shadow .2s;
+    border:2px solid transparent;
+  }
+  .card:hover{transform:translateY(-3px);border-color:#ffffffaa;}
+  .card .ic{font-size:2.1rem;}
+  .card .ut{font-size:1.15rem;font-weight:800;margin:6px 0 2px;}
+  .card .utheme{color:var(--muted);font-size:.9rem;}
+  .card .meta{margin-top:12px;display:flex;flex-direction:column;gap:6px;font-size:.85rem;}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;color:#475569;
+    padding:3px 10px;border-radius:999px;font-weight:700;font-size:.78rem;width:fit-content;}
+  .pill.gold{background:#fef3c7;color:#b45309;}
+  .pill.blue{background:#e0e7ff;color:#4338ca;}
+  .pill.green{background:#dcfce7;color:#15803d;}
+  .pill.red{background:#fee2e2;color:#b91c1c;}
+  .ribbon{position:absolute;top:12px;right:-30px;transform:rotate(45deg);
+    background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#fff;font-size:.7rem;font-weight:800;
+    padding:3px 34px;box-shadow:0 2px 6px rgba(0,0,0,.15);}
+
+  /* unit choice */
+  .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-top:8px;}
+  .panel h2{margin:0 0 4px;font-size:1.4rem;}
+  .dir-choices{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px;}
+  .dir{
+    border:2px solid #eef2f7;border-radius:18px;padding:22px;text-align:center;cursor:pointer;
+    transition:transform .12s,border-color .2s,background .2s;background:#fff;
+  }
+  .dir:hover{transform:translateY(-3px);border-color:var(--primary);background:#f5f3ff;}
+  .dir .big{font-size:2.6rem;}
+  .dir .t{font-weight:800;font-size:1.15rem;margin-top:6px;}
+  .dir .d{color:var(--muted);font-size:.88rem;margin-top:2px;}
+  .opts{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:20px;color:var(--muted);font-size:.92rem;}
+  .opts label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+  .wordlist{margin-top:22px;border-top:1px dashed #e5e7eb;padding-top:14px;}
+  .wordlist .wt{font-weight:800;margin-bottom:8px;color:var(--muted);font-size:.9rem;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{background:#f8fafc;border:1px solid #eef2f7;border-radius:10px;padding:6px 10px;font-size:.85rem;}
+  .chip b{color:var(--primary);}
+
+  /* test */
+  .testbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .progress{height:12px;background:#ffffff99;border-radius:999px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.1);}
+  .progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,#34d399,#22c55e);transition:width .3s ease;}
+  .qcard{background:var(--card);border-radius:24px;box-shadow:var(--shadow);padding:30px 26px;text-align:center;}
+  .qlabel{color:var(--muted);font-size:.9rem;font-weight:700;letter-spacing:1px;}
+  .qword{font-size:2.6rem;font-weight:800;margin:10px 0 6px;word-break:break-word;}
+  .qword small{display:block;font-size:1rem;color:var(--muted);font-weight:600;margin-top:4px;}
+  .answer{margin-top:18px;}
+  .answer input{
+    width:100%;max-width:440px;font-size:1.5rem;font-family:inherit;text-align:center;
+    padding:14px 16px;border-radius:16px;border:2px solid #e5e7eb;outline:none;transition:border-color .2s,box-shadow .2s;
+  }
+  .answer input:focus{border-color:var(--primary);box-shadow:0 0 0 4px #efedff;}
+  .actions{margin-top:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+  .feedback{margin-top:18px;border-radius:16px;padding:16px 18px;text-align:left;display:none;animation:fade .2s;}
+  .feedback.show{display:block;}
+  .feedback.ok{background:#dcfce7;color:#14532d;border:1px solid #bbf7d0;}
+  .feedback.no{background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca;}
+  .feedback .fh{font-weight:800;font-size:1.1rem;display:flex;align-items:center;gap:8px;}
+  .feedback .fc{margin-top:6px;font-size:1.05rem;}
+  .feedback .fc b{font-size:1.15rem;}
+  .livescore{font-weight:800;}
+
+  /* result */
+  .score-ring{font-size:3rem;font-weight:900;}
+  .score-msg{font-size:1.2rem;font-weight:800;margin:6px 0;}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0;}
+  .stat{background:#f8fafc;border-radius:14px;padding:14px;text-align:center;border:1px solid #eef2f7;}
+  .stat .n{font-size:1.6rem;font-weight:900;}
+  .stat .l{color:var(--muted);font-size:.82rem;}
+  .wronglist{margin-top:8px;}
+  .wronglist .wt{font-weight:800;margin-bottom:10px;}
+  .wrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+    background:#fff5f5;border:1px solid #fecaca;border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+  .wrow .e{font-weight:800;}
+  .wrow .c{color:var(--muted);font-size:.9rem;}
+  .wrow .u{color:var(--red-d);font-size:.85rem;margin-top:4px;}
+  .wrow .tag{background:#fee2e2;color:#b91c1d;border-radius:8px;padding:4px 8px;font-size:.75rem;font-weight:800;}
+
+  /* notebook */
+  .nb-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+  .nb-item{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px;border-left:6px solid var(--red);}
+  .nb-item .top{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;}
+  .nb-item .en{font-weight:800;font-size:1.15rem;}
+  .nb-item .cn{color:var(--muted);}
+  .nb-item .row{margin-top:8px;font-size:.92rem;}
+  .nb-item .ua{color:var(--red-d);}
+  .nb-item .ca{color:var(--green-d);}
+  .empty{text-align:center;padding:40px 10px;color:var(--muted);}
+  .empty .big{font-size:3rem;}
+  .muted-btn{background:none;border:0;color:var(--muted);cursor:pointer;font-size:.85rem;text-decoration:underline;font-family:inherit;}
+
+  .footer{text-align:center;color:#475569;font-size:.85rem;margin-top:30px;opacity:.85;}
+  @media(max-width:560px){
+    .dir-choices{grid-template-columns:1fr;}
+    .summary{grid-template-columns:1fr 1fr 1fr;}
+    .qword{font-size:2rem;}
+    .title{font-size:1.4rem;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="title"><span class="logo">📖</span><span>小学英语单词测试</span></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn ghost" id="goNotebook">📒 错题本</button>
+      <button class="btn ghost" id="goHome">🏠 首页</button>
+    </div>
+  </header>
+
+  <!-- 首页：按单元分类 -->
+  <section id="home-screen" class="screen active">
+    <p class="hint">选择一个单元开始测试，系统会自动记录得分并把错题加入错题本。</p>
+    <div class="grid" id="unitGrid"></div>
+  </section>
+
+  <!-- 单元：选择测试方向 -->
+  <section id="unit-screen" class="screen">
+    <button class="btn ghost" onclick="showScreen('home-screen')">← 返回首页</button>
+    <div class="panel">
+      <h2 id="unitTitle"></h2>
+      <p class="hint" id="unitInfo"></p>
+      <div class="dir-choices">
+        <div class="dir" id="dirC2E">
+          <div class="big">🇨🇳 ➡️ 🇬🇧</div>
+          <div class="t">中译英</div>
+          <div class="d">看中文，拼写英文单词</div>
+        </div>
+        <div class="dir" id="dirE2C">
+          <div class="big">🇬🇧 ➡️ 🇨🇳</div>
+          <div class="t">英译中</div>
+          <div class="d">看英文，写出中文意思</div>
+        </div>
+      </div>
+      <div class="opts">
+        <label><input type="checkbox" id="optShuffle" checked> 打乱顺序</label>
+        <label><input type="checkbox" id="optAll"> 测试全部单词（不勾选则随机 10 题）</label>
+      </div>
+      <div class="wordlist">
+        <div class="wt">本单元单词（共 <b id="wordCount">0</b> 个）</div>
+        <div class="chips" id="wordChips"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 测试进行中 -->
+  <section id="test-screen" class="screen">
+    <div class="testbar">
+      <div>
+        <div class="hint" id="testMeta"></div>
+        <div style="font-weight:800;" id="testTitle"></div>
+      </div>
+      <div class="hint">得分：<span class="livescore" id="liveScore">0</span> / <span id="liveTotal">0</span></div>
+    </div>
+    <div class="progress"><i id="progressBar"></i></div>
+    <div class="qcard" style="margin-top:16px;">
+      <div class="qlabel" id="qLabel"></div>
+      <div class="qword" id="qWord"></div>
+      <div class="answer">
+        <input id="answerInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+      </div>
+      <div class="actions">
+        <button class="btn primary lg" id="submitBtn">提交答案 ✅</button>
+        <button class="btn ghost" id="quitBtn">退出</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+  </section>
+
+  <!-- 测试结果 -->
+  <section id="result-screen" class="screen">
+    <div class="panel" style="text-align:center;">
+      <div class="score-ring" id="resultScore">0/0</div>
+      <div class="score-msg" id="resultMsg"></div>
+      <div class="summary">
+        <div class="stat"><div class="n" id="sCorrect">0</div><div class="l">答对</div></div>
+        <div class="stat"><div class="n" id="sWrong">0</div><div class="l">答错</div></div>
+        <div class="stat"><div class="n" id="sAcc">0%</div><div class="l">正确率</div></div>
+      </div>
+      <div class="wronglist" id="resultWrong"></div>
+      <div class="actions" style="margin-top:22px;">
+        <button class="btn green lg" id="againBtn">再测一次 🔁</button>
+        <button class="btn primary lg" id="toNotebookBtn">查看错题本 📒</button>
+        <button class="btn ghost lg" id="homeBtn">返回首页 🏠</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 错题本 -->
+  <section id="notebook-screen" class="screen">
+    <div class="nb-head">
+      <div>
+        <h2 style="margin:0;">📒 错题本</h2>
+        <p class="hint" id="nbInfo"></p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn primary" id="retestWrongBtn">重测错题 🔁</button>
+        <button class="btn danger" id="clearNbBtn">清空错题本</button>
+      </div>
+    </div>
+    <div id="notebookList"></div>
+  </section>
+
+  <div class="footer">数据保存在本浏览器中（localStorage）· 关闭网页也不会丢失</div>
+</div>
+
+<script>
+/* ============ 单词数据 ============ */
+const UNITS = [
+  { id:1, title:"Unit 1", theme:"日常作息与校园", icon:"⏰", words:[
+    {en:"get up",cn:"起床"},{en:"have breakfast",cn:"吃早餐"},{en:"go to school",cn:"上学"},
+    {en:"have lunch",cn:"吃午餐"},{en:"go home",cn:"回家"},{en:"have dinner",cn:"吃晚餐"},
+    {en:"go to bed",cn:"睡觉"},{en:"daily",cn:"每日的；日常的"},{en:"schedule",cn:"日程安排"},
+    {en:"at",cn:"在（某时间或时刻）"},{en:"o'clock",cn:"（表示整点）…… 点钟"},{en:"half",cn:"（时间）…… 点半"},
+    {en:"little",cn:"年幼的"},{en:"drink",cn:"喝；饮"},{en:"lesson",cn:"课"},{en:"draw",cn:"画"},
+    {en:"quarter",cn:"15 分钟；一刻钟"},{en:"Miss",cn:"小姐"},{en:"brush my teeth",cn:"刷牙"},
+    {en:"wash my face",cn:"洗脸"},{en:"Good night, kids!",cn:"晚安，孩子们！"},{en:"IT",cn:"（学科）信息技术"},
+    {en:"Science",cn:"（学科）科学"},{en:"club",cn:"俱乐部；社团"},{en:"student",cn:"学生"},
+    {en:"different",cn:"不同的"},{en:"subject",cn:"科目"},{en:"class",cn:"课；班级"},{en:"pig",cn:"猪"},
+    {en:"timetable",cn:"时间表"},{en:"raise the national flag",cn:"升国旗"},{en:"work out",cn:"解决；算出"},
+    {en:"after school",cn:"放学后"},{en:"put on a play",cn:"演出戏剧"},{en:"model plane",cn:"飞机模型"},{en:"Great!",cn:"太棒了！"}
+  ]},
+  { id:2, title:"Unit 2", theme:"学科", icon:"📚", words:[
+    {en:"Chinese",cn:"（学科）语文"},{en:"Maths",cn:"（学科）数学"},{en:"English",cn:"（学科）英语"},
+    {en:"PE",cn:"（学科）体育"},{en:"Music",cn:"（学科）音乐"},{en:"Art",cn:"（学科）美术"}
+  ]},
+  { id:3, title:"Unit 3", theme:"职业与健康", icon:"💼", words:[
+    {en:"firefighter",cn:"消防员"},{en:"police officer",cn:"警察"},{en:"farmer",cn:"农夫；农民"},
+    {en:"teacher",cn:"老师"},{en:"doctor",cn:"医生"},{en:"bus driver",cn:"公交车司机"},
+    {en:"fire",cn:"火"},{en:"sick",cn:"生病的"},{en:"soup",cn:"汤"},{en:"Mrs",cn:"夫人；太太"},
+    {en:"job",cn:"工作；职业"},{en:"people",cn:"人；人们"},{en:"know",cn:"知道"},{en:"dentist",cn:"牙医"},
+    {en:"or",cn:"或；或者"},{en:"sweet",cn:"甜的"},{en:"check",cn:"检查"},{en:"hospital",cn:"医院"},
+    {en:"nurse",cn:"护士"},{en:"put out fires",cn:"灭火"},{en:"look after",cn:"照顾；照料"},
+    {en:"twice or three times",cn:"两次或三次"},{en:"fill holes in teeth",cn:"补牙"},{en:"pull bad teeth out",cn:"拔蛀牙"}
+  ]},
+  { id:4, title:"Unit 4", theme:"乐器", icon:"🎵", words:[
+    {en:"triangle",cn:"三角铁（打击乐器）"},{en:"violin",cn:"小提琴"},{en:"piano",cn:"钢琴"},
+    {en:"guitar",cn:"吉他"},{en:"erhu",cn:"二胡"},{en:"flute",cn:"长笛"},{en:"pipa",cn:"琵琶"},
+    {en:"drum",cn:"鼓"},{en:"woman",cn:"成年女子；妇女"},{en:"concert",cn:"音乐会"},
+    {en:"think",cn:"思考；想到（主意）"},{en:"clever",cn:"聪明的"},{en:"idea",cn:"想法"},
+    {en:"jar",cn:"广口瓶"},{en:"them",cn:"他们；她们；它们"},{en:"these",cn:"这些"},
+    {en:"bucket",cn:"桶"},{en:"pot",cn:"锅"},{en:"hit",cn:"打；击"},
+    {en:"beautiful",cn:"美妙的；漂亮的"},{en:"clap",cn:"鼓掌"},{en:"musical instrument",cn:"乐器"}
+  ]},
+  { id:5, title:"Unit 5", theme:"形状与艺术", icon:"🔷", words:[
+    {en:"paper-cut",cn:"剪纸"},{en:"painting",cn:"绘画；画作"},{en:"circle",cn:"圆形"},
+    {en:"triangle",cn:"三角形"},{en:"square",cn:"正方形；正方形的"},{en:"star",cn:"星星；星形物"},
+    {en:"rectangle",cn:"矩形；长方形"},{en:"clock",cn:"钟"},{en:"shape",cn:"形状"},
+    {en:"side",cn:"边"},{en:"corner",cn:"角"},{en:"ask",cn:"问"},{en:"tiger",cn:"老虎"},{en:"say",cn:"说"}
+  ]},
+  { id:6, title:"Unit 6", theme:"时间", icon:"⏱️", words:[
+    {en:"day",cn:"天；白昼；白天"},{en:"night",cn:"夜晚；晚上"},{en:"hour",cn:"小时"},
+    {en:"minute",cn:"分钟"},{en:"second",cn:"秒"},{en:"month",cn:"月；月份"},{en:"year",cn:"年"},
+    {en:"measure",cn:"测量"},{en:"question",cn:"问题"},{en:"around",cn:"围绕；环绕"},
+    {en:"exercise",cn:"运动；锻炼"},{en:"get ready",cn:"准备好"},{en:"at the same time",cn:"同时"},
+    {en:"What time is it?",cn:"几点了？"}
+  ]},
+  { id:7, title:"Unit 7", theme:"物质与变化", icon:"🧊", words:[
+    {en:"liquid",cn:"液体"},{en:"solid",cn:"固体"},{en:"gas",cn:"气体"},{en:"sugar",cn:"食糖"},
+    {en:"salt",cn:"盐；食盐"},{en:"cream",cn:"奶油"},{en:"melt",cn:"（使）熔化；融化"},
+    {en:"steam",cn:"水蒸气"},{en:"heat",cn:"加热"},{en:"hungry",cn:"感到饿的"},
+    {en:"party",cn:"聚会；派对"},{en:"ice cream",cn:"冰淇淋"},{en:"freezer",cn:"冰柜"},
+    {en:"door",cn:"门"},{en:"open",cn:"开着的；敞开的"},{en:"plastic",cn:"塑料的"},
+    {en:"mix",cn:"（使）混合"},{en:"put",cn:"放"},{en:"mixture",cn:"混合物"},
+    {en:"chocolate",cn:"巧克力"},{en:"shake",cn:"摇动"},{en:"freeze",cn:"结冰；冻住"},
+    {en:"Sure!",cn:"当然！"},{en:"Don't worry!",cn:"别担心！"},{en:"Done!",cn:"做好了！"}
+  ]},
+  { id:8, title:"Unit 8", theme:"礼貌用语", icon:"🚪", words:[
+    {en:"polite",cn:"有礼貌的"},{en:"take turns",cn:"轮流"},{en:"knock",cn:"敲击"},
+    {en:"ox",cn:"公牛"},{en:"until",cn:"直到…… 为止"},{en:"someone",cn:"某人"},
+    {en:"invite",cn:"邀请"},{en:"behind",cn:"在…… 之后"},{en:"maybe",cn:"（不确定）大概，可能"},
+    {en:"cry",cn:"哭泣"},{en:"kind",cn:"友善的"},{en:"honey",cn:"蜂蜜"},{en:"joke",cn:"笑话；玩笑"},
+    {en:"whatever",cn:"无论什么"},{en:"another",cn:"另一个"},{en:"helpful",cn:"愿意帮忙的"},
+    {en:"way",cn:"方法；方式"},{en:"May I come in?",cn:"我可以进来吗？"}
+  ]}
+];
+
+/* ============ 本地存储 ============ */
+const K_WRONG="vocab_wrong_v1", K_HIST="vocab_history_v1";
+function load(key,def){ try{return JSON.parse(localStorage.getItem(key))||def;}catch(e){return def;} }
+function save(key,val){ try{localStorage.setItem(key,JSON.stringify(val));}catch(e){} }
+function getWrong(){ return load(K_WRONG,[]); }
+function getHistory(){ return load(K_HIST,[]); }
+
+/* ============ 工具函数 ============ */
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+// 归一化英文答案：小写、去多余空格、去标点
+function normEn(s){ return (s||"").toLowerCase().replace(/[.!?，。！？、；;:：]/g,"").replace(/\s+/g," ").trim(); }
+// 归一化中文答案：去全部空格、去常见末尾标点
+function normCn(s){ return (s||"").replace(/\s+/g,"").replace(/[？！?!.。，,]+$/g,""); }
+// 由原始中文生成可接受的中文答案列表（去括注、按 ； 、 拆分、去“的”尾）
+function buildCnAnswers(cn){
+  let c = (cn||"")
+    .replace(/（[^）]*）/g,"").replace(/\([^)]*\)/g,"")   // 去掉括注（学科）等
+    .replace(/…+/g,"")                                     // 去省略号占位符
+    .replace(/[？?!！.。]/g,"");                            // 去末尾/句中标点
+  let parts = c.split(/[；;]/).map(x=>x.trim()).filter(Boolean);
+  let out=[];
+  parts.forEach(p=>{
+    out.push(p);
+    if(p.endsWith("的") && p.length>1) out.push(p.slice(0,-1)); // 聪明的->聪明
+  });
+  // 也允许带顿号的整串（如“农夫；农民”已拆，但“两次或三次”不会被拆，保留整体即可）
+  return Array.from(new Set(out));
+}
+
+/* ============ 状态 ============ */
+let test = null; // {unitTitle, dir, questions, idx, correct, wrong:[{en,cn,user,correct}], answered}
+
+/* ============ 页面切换 ============ */
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ============ 首页 ============ */
+function renderHome(){
+  const grid=document.getElementById("unitGrid");
+  const hist=getHistory();
+  grid.innerHTML="";
+  UNITS.forEach(u=>{
+    const stats=hist.filter(h=>h.unitId===u.id);
+    let best=null,last=null;
+    stats.forEach(h=>{ if(!best||h.score/h.total>best.score/best.total) best=h; });
+    if(stats.length) last=stats[stats.length-1];
+    const card=document.createElement("div");
+    card.className="card";
+    card.onclick=()=>openUnit(u.id);
+    const fullMark = best && best.score===best.total;
+    card.innerHTML=`
+      ${fullMark?'<div class="ribbon">满分</div>':''}
+      <div class="ic">${u.icon}</div>
+      <div class="ut">${u.title}</div>
+      <div class="utheme">${u.theme}</div>
+      <div class="meta">
+        <span class="pill blue">📚 ${u.words.length} 词</span>
+        ${best?`<span class="pill gold">🏆 最高 ${best.score}/${best.total}</span>`:`<span class="pill">尚未测试</span>`}
+        ${last?`<span class="pill green">🕘 上次 ${last.score}/${last.total}（${dirName(last.dir)}）</span>`:''}
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+function dirName(dir){ return dir==="c2e"?"中译英":"英译中"; }
+
+/* ============ 单元页 ============ */
+function openUnit(unitId){
+  const u=UNITS.find(x=>x.id===unitId);
+  document.getElementById("unitTitle").textContent=`${u.icon} ${u.title} · ${u.theme}`;
+  document.getElementById("unitInfo").textContent=`共 ${u.words.length} 个单词。选择测试方向后即可开始。`;
+  document.getElementById("wordCount").textContent=u.words.length;
+  const chips=document.getElementById("wordChips");
+  chips.innerHTML="";
+  u.words.forEach(w=>{
+    const c=document.createElement("span");
+    c.className="chip";
+    c.innerHTML=`<b>${w.en}</b> ${w.cn}`;
+    chips.appendChild(c);
+  });
+  document.getElementById("dirC2E").onclick=()=>startTest(unitId,"c2e");
+  document.getElementById("dirE2C").onclick=()=>startTest(unitId,"e2c");
+  showScreen("unit-screen");
+}
+
+/* ============ 开始测试 ============ */
+function startTest(unitId,dir,customQuestions){
+  const u=UNITS.find(x=>x.id===unitId);
+  let questions;
+  if(customQuestions){ questions=customQuestions; }
+  else{
+    let pool=u.words.slice();
+    if(document.getElementById("optShuffle").checked) pool=shuffle(pool);
+    if(!document.getElementById("optAll").checked && pool.length>10) pool=pool.slice(0,10);
+    questions=pool.map(w=>({en:w.en,cn:w.cn}));
+  }
+  test={ unitId, unitTitle:`${u.title} · ${u.theme}`, dir, questions, idx:0, correct:0, wrong:[], answered:false };
+  document.getElementById("testTitle").textContent=test.unitTitle;
+  document.getElementById("liveTotal").textContent=questions.length;
+  renderQuestion();
+  showScreen("test-screen");
+}
+
+function renderQuestion(){
+  const q=test.questions[test.idx];
+  test.answered=false;
+  document.getElementById("testMeta").textContent=`第 ${test.idx+1} / ${test.questions.length} 题 · ${dirName(test.dir)}`;
+  document.getElementById("liveScore").textContent=test.correct;
+  const bar=document.getElementById("progressBar");
+  bar.style.width=(test.idx/test.questions.length*100)+"%";
+  const fb=document.getElementById("feedback");
+  fb.className="feedback"; fb.innerHTML="";
+  const input=document.getElementById("answerInput");
+  input.value=""; input.disabled=false;
+  const submitBtn=document.getElementById("submitBtn");
+  submitBtn.disabled=false; submitBtn.textContent="提交答案 ✅";
+  if(test.dir==="c2e"){
+    document.getElementById("qLabel").textContent="请写出对应的英文：";
+    document.getElementById("qWord").innerHTML=`${q.cn}<small>（输入英文）</small>`;
+    input.placeholder="type in English…";
+  }else{
+    document.getElementById("qLabel").textContent="请写出对应的中文：";
+    document.getElementById("qWord").innerHTML=`${q.en}<small>（输入中文意思）</small>`;
+    input.placeholder="请输入中文…";
+  }
+  setTimeout(()=>input.focus(),50);
+}
+
+function checkAnswer(q,user){
+  if(test.dir==="c2e"){
+    return normEn(user)===normEn(q.en);
+  }else{
+    const ua=normCn(user);
+    return buildCnAnswers(q.cn).some(a=>normCn(a)===ua);
+  }
+}
+
+function submitAnswer(){
+  if(!test || test.answered){
+    // 已作答时按钮当“下一题”用
+    if(test && test.answered) nextQuestion();
+    return;
+  }
+  const q=test.questions[test.idx];
+  const input=document.getElementById("answerInput");
+  const user=input.value.trim();
+  if(!user){ input.focus(); input.style.borderColor="var(--red)"; setTimeout(()=>input.style.borderColor="",600); return; }
+  const ok=checkAnswer(q,user);
+  test.answered=true;
+  input.disabled=true;
+  document.getElementById("submitBtn").disabled=false;
+  const fb=document.getElementById("feedback");
+  if(ok){
+    test.correct++;
+    document.getElementById("liveScore").textContent=test.correct;
+    fb.className="feedback ok show";
+    fb.innerHTML=`<div class="fh">✅ 正确！</div>`;
+  }else{
+    const correctShow = test.dir==="c2e" ? q.en : q.cn;
+    fb.className="feedback no show";
+    fb.innerHTML=`<div class="fh">❌ 答错了</div>
+      <div class="fc">你的答案：<b style="color:var(--red-d)">${escapeHtml(user)}</b></div>
+      <div class="fc">正确答案：<b style="color:var(--green-d)">${escapeHtml(correctShow)}</b>
+        ${test.dir==="c2e"?`<br>中文：${escapeHtml(q.cn)}`:`<br>英文：${escapeHtml(q.en)}`}</div>`;
+    test.wrong.push({en:q.en,cn:q.cn,user:user,correct: test.dir==="c2e"?q.en:q.cn});
+    addWrong(q,user);
+  }
+  const last=(test.idx===test.questions.length-1);
+  document.getElementById("submitBtn").textContent= last ? "查看结果 🎉" : "下一题 →";
+}
+
+function nextQuestion(){
+  if(test.idx<test.questions.length-1){ test.idx++; renderQuestion(); }
+  else finishTest();
+}
+
+/* ============ 结果 ============ */
+function finishTest(){
+  const total=test.questions.length, c=test.correct, w=test.wrong.length;
+  const acc=total?Math.round(c/total*100):0;
+  document.getElementById("resultScore").textContent=`${c} / ${total}`;
+  document.getElementById("sCorrect").textContent=c;
+  document.getElementById("sWrong").textContent=w;
+  document.getElementById("sAcc").textContent=acc+"%";
+  let msg,emoji;
+  if(acc===100){msg="太棒了！满分通过！🌟";emoji="🏆";}
+  else if(acc>=80){msg="做得很好！继续保持～";emoji="😄";}
+  else if(acc>=60){msg="不错哦，再练练就更棒了！";emoji="🙂";}
+  else{msg="别灰心，多读几遍错题本就能进步！";emoji="💪";}
+  document.getElementById("resultMsg").textContent=`${emoji} ${msg}`;
+  const wl=document.getElementById("resultWrong");
+  if(w>0){
+    wl.innerHTML=`<div class="wt">📝 答错的题（已加入错题本）</div>`+
+      test.wrong.map(x=>`
+        <div class="wrow">
+          <div>
+            <div class="e">${escapeHtml(x.en)}</div>
+            <div class="c">${escapeHtml(x.cn)}</div>
+            <div class="u">你的答案：${escapeHtml(x.user)}</div>
+          </div>
+          <span class="tag">× 错</span>
+        </div>`).join("");
+  }else{ wl.innerHTML=""; }
+  // 记录得分历史
+  const hist=getHistory();
+  hist.push({unitId:test.unitId,unitTitle:test.unitTitle,dir:test.dir,score:c,total:total,date:Date.now()});
+  save(K_HIST,hist);
+  // 记住本次方向以便“再测一次”
+  test.lastDir=test.dir; test.lastUnitId=test.unitId;
+  document.getElementById("againBtn").onclick=()=>startTest(test.lastUnitId,test.lastDir);
+  renderHome(); renderNotebook();
+  showScreen("result-screen");
+}
+
+/* ============ 错题本 ============ */
+function addWrong(q,user){
+  const list=getWrong();
+  const key=test.unitId+"|"+test.dir+"|"+q.en;
+  const found=list.find(x=>x.key===key);
+  if(found){
+    found.count=(found.count||1)+1;
+    found.lastUser=user; found.lastTime=Date.now();
+  }else{
+    list.push({key,unitId:test.unitId,unitTitle:test.unitTitle,dir:test.dir,
+      en:q.en,cn:q.cn,lastUser:user,count:1,lastTime:Date.now()});
+  }
+  save(K_WRONG,list);
+}
+function renderNotebook(){
+  const list=getWrong().slice().sort((a,b)=>b.lastTime-a.lastTime);
+  const box=document.getElementById("notebookList");
+  document.getElementById("nbInfo").textContent=list.length?`共有 ${list.length} 道错题，按最近答错时间排序。`:"还没有错题，加油！";
+  if(!list.length){
+    box.innerHTML=`<div class="empty"><div class="big">🎉</div>错题本是空的，继续保持！</div>`;
+    document.getElementById("retestWrongBtn").disabled=true;
+    return;
+  }
+  document.getElementById("retestWrongBtn").disabled=false;
+  box.innerHTML=list.map((it,i)=>`
+    <div class="nb-item">
+      <div class="top">
+        <div>
+          <span class="en">${escapeHtml(it.en)}</span>
+          <span class="cn">${escapeHtml(it.cn)}</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span class="pill blue">${escapeHtml(it.unitTitle.split(" · ")[0])}</span>
+          <span class="pill">${dirName(it.dir)}</span>
+          <span class="pill red">错 ${it.count} 次</span>
+          <button class="muted-btn" onclick="removeWrong(${i})">移除</button>
+        </div>
+      </div>
+      <div class="row"><span class="ua">你的答案：${escapeHtml(it.lastUser)}</span></div>
+      <div class="row"><span class="ca">正确答案：${escapeHtml(it.dir==="c2e"?it.en:it.cn)}</span></div>
+    </div>`).join("");
+}
+function removeWrong(i){
+  const list=getWrong();
+  list.splice(i,1); save(K_WRONG,list); renderNotebook();
+}
+function retestWrong(){
+  const list=getWrong();
+  if(!list.length) return;
+  // 按方向分组测试（错题本可能含两个方向，取多数方向）
+  const byDir={c2e:[],e2c:[]};
+  list.forEach(it=>{ (byDir[it.dir]||(byDir[it.dir]=[])).push(it); });
+  const dir = byDir.c2e.length>=byDir.e2c.length ? "c2e" : "e2c";
+  const pool=(byDir[dir]||[]).slice();
+  const questions=shuffle(pool).map(it=>({en:it.en,cn:it.cn}));
+  // 用一个虚拟单元标题
+  test=null;
+  document.getElementById("testTitle").textContent="📒 错题本重测";
+  startCustom(questions,dir);
+}
+function startCustom(questions,dir){
+  test={ unitId:0, unitTitle:"📒 错题本重测", dir, questions, idx:0, correct:0, wrong:[], answered:false };
+  document.getElementById("testTitle").textContent=test.unitTitle;
+  document.getElementById("liveTotal").textContent=questions.length;
+  renderQuestion();
+  showScreen("test-screen");
+}
+
+function escapeHtml(s){ return (s+"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+
+/* ============ 事件绑定 ============ */
+document.getElementById("submitBtn").onclick=submitAnswer;
+document.getElementById("answerInput").addEventListener("keydown",e=>{
+  if(e.key==="Enter"){ e.preventDefault(); submitAnswer(); }
+});
+document.getElementById("quitBtn").onclick=()=>{ if(confirm("确定退出本次测试吗？本次成绩不会记录。")){ test=null; showScreen("home-screen"); } };
+document.getElementById("goNotebook").onclick=()=>{ renderNotebook(); showScreen("notebook-screen"); };
+document.getElementById("goHome").onclick=()=>{ renderHome(); showScreen("home-screen"); };
+document.getElementById("toNotebookBtn").onclick=()=>{ renderNotebook(); showScreen("notebook-screen"); };
+document.getElementById("homeBtn").onclick=()=>{ renderHome(); showScreen("home-screen"); };
+document.getElementById("retestWrongBtn").onclick=retestWrong;
+document.getElementById("clearNbBtn").onclick=()=>{
+  if(confirm("确定清空全部错题吗？此操作不可撤销。")){ save(K_WRONG,[]); renderNotebook(); }
+};
+
+/* ============ 初始化 ============ */
+renderHome();
+renderNotebook();
+</script>
+</body>
+</html>
