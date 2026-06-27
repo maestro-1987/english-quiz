@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>小学英语单词测试</title>
+<title>深圳-沪教版英语单词测验</title>
 <style>
   :root{
     --bg1:#a1c4fd; --bg2:#c2e9fb; --bg3:#fbc2eb;
@@ -161,27 +161,39 @@
     .qword{font-size:2rem;}
     .title{font-size:1.4rem;}
   }
+  .card.locked{opacity:.55;cursor:default;}
+  .card.locked:hover{transform:none;border-color:transparent;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="title"><span class="logo">📖</span><span>小学英语单词测试</span></div>
+    <div class="title"><span class="logo">📖</span><span>深圳-沪教版英语单词测验</span></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <button class="btn ghost" id="goNotebook">📒 错题本</button>
       <button class="btn ghost" id="goHome">🏠 首页</button>
     </div>
   </header>
 
-  <!-- 首页：按单元分类 -->
+  <!-- 首页：按年级-学期分类 -->
   <section id="home-screen" class="screen active">
-    <p class="hint">选择一个单元开始测试，系统会自动记录得分并把错题加入错题本。</p>
+    <p class="hint">选择【年级 - 学期】进入，再选择单元开始测试。系统会自动记录得分并把错题加入错题本。</p>
+    <div class="grid" id="gradeGrid"></div>
+  </section>
+
+  <!-- 学期页：显示该学期下的单元列表 -->
+  <section id="term-screen" class="screen">
+    <button class="btn ghost" onclick="showScreen('home-screen')">← 返回首页</button>
+    <div style="margin-top:8px;">
+      <h2 style="margin:0 0 4px;" id="termTitle"></h2>
+      <p class="hint" id="termInfo"></p>
+    </div>
     <div class="grid" id="unitGrid"></div>
   </section>
 
   <!-- 单元：选择测试方向 -->
   <section id="unit-screen" class="screen">
-    <button class="btn ghost" onclick="showScreen('home-screen')">← 返回首页</button>
+    <button class="btn ghost" id="backToTermBtn">← 返回单元列表</button>
     <div class="panel">
       <h2 id="unitTitle"></h2>
       <p class="hint" id="unitInfo"></p>
@@ -308,7 +320,8 @@ function playFinish(){
 }
 
 /* ============ 单词数据 ============ */
-const UNITS = [
+// 单元原始数据（id 全局唯一）
+const RAW_UNITS = [
   { id:1, title:"Unit 1", theme:"日常作息与校园", icon:"⏰", words:[
     {en:"get up",cn:"起床"},{en:"have breakfast",cn:"吃早餐"},{en:"go to school",cn:"上学"},
     {en:"have lunch",cn:"吃午餐"},{en:"go home",cn:"回家"},{en:"have dinner",cn:"吃晚餐"},
@@ -377,6 +390,35 @@ const UNITS = [
   ]}
 ];
 
+// 年级-学期目录（grade + term 组成唯一 key，用于查找单元）
+const GRADES = [
+  { grade:"一年级", term:"上学期", key:"1-1", icon:"🌱" },
+  { grade:"一年级", term:"下学期", key:"1-2", icon:"🌸" },
+  { grade:"二年级", term:"上学期", key:"2-1", icon:"🌿" },
+  { grade:"二年级", term:"下学期", key:"2-2", icon:"🌼" },
+  { grade:"三年级", term:"上学期", key:"3-1", icon:"🍃" },
+  { grade:"三年级", term:"下学期", key:"3-2", icon:"🌻" },
+  { grade:"四年级", term:"上学期", key:"4-1", icon:"🌳" },
+  { grade:"四年级", term:"下学期", key:"4-2", icon:"🍎" },
+  { grade:"五年级", term:"上学期", key:"5-1", icon:"🌟" },
+  { grade:"五年级", term:"下学期", key:"5-2", icon:"✨" },
+  { grade:"六年级", term:"上学期", key:"6-1", icon:"🚀" },
+  { grade:"六年级", term:"下学期", key:"6-2", icon:"🎓" }
+];
+
+// 单元 → 所属学期映射（目前 8 个单元都属于"四年级-下学期"）
+const UNIT_GRADE_MAP = { "4-2":[1,2,3,4,5,6,7,8] };
+
+// 工具：根据学期 key 取单元列表
+function unitsOfGrade(key){
+  const ids = UNIT_GRADE_MAP[key] || [];
+  return ids.map(id=>RAW_UNITS.find(u=>u.id===id)).filter(Boolean);
+}
+function unitById(id){ return RAW_UNITS.find(u=>u.id===id); }
+
+// 兼容旧代码
+const UNITS = RAW_UNITS;
+
 /* ============ 本地存储 ============ */
 const K_WRONG="vocab_wrong_v1", K_HIST="vocab_history_v1";
 function load(key,def){ try{return JSON.parse(localStorage.getItem(key))||def;}catch(e){return def;} }
@@ -416,12 +458,48 @@ function showScreen(id){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* ============ 首页 ============ */
+/* ============ 首页：年级-学期网格 ============ */
+let currentTermKey = null; // 当前进入的学期 key
 function renderHome(){
+  const grid=document.getElementById("gradeGrid");
+  const hist=getHistory();
+  grid.innerHTML="";
+  GRADES.forEach(g=>{
+    const units=unitsOfGrade(g.key);
+    const unitIds=units.map(u=>u.id);
+    const stats=hist.filter(h=>unitIds.includes(h.unitId));
+    const wordCount=units.reduce((s,u)=>s+u.words.length,0);
+    const hasContent = units.length>0;
+    const card=document.createElement("div");
+    card.className="card"+(hasContent?"":" locked");
+    if(hasContent) card.onclick=()=>openTerm(g.key);
+    const fullMark = hasContent && stats.length>0 && stats.every(h=>h.score===h.total) && stats.length===unitIds.length;
+    card.innerHTML=`
+      ${fullMark?'<div class="ribbon">满分</div>':''}
+      <div class="ic">${g.icon}</div>
+      <div class="ut">${g.grade}</div>
+      <div class="utheme">${g.term}</div>
+      <div class="meta">
+        ${hasContent
+          ? `<span class="pill blue">📚 ${units.length} 单元 / ${wordCount} 词</span>
+             <span class="pill">${stats.length?`已测 ${stats.length} 次`:'尚未测试'}</span>`
+          : `<span class="pill">📝 单词整理中…</span>`}
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+/* ============ 学期页：单元列表 ============ */
+function openTerm(key){
+  currentTermKey=key;
+  const g=GRADES.find(x=>x.key===key);
+  const units=unitsOfGrade(key);
+  document.getElementById("termTitle").textContent=`${g.icon} ${g.grade} · ${g.term}`;
+  document.getElementById("termInfo").textContent=units.length?`本学期共 ${units.length} 个单元，点击任一单元开始测试。`:"本学期的单词还在整理中，敬请期待～";
   const grid=document.getElementById("unitGrid");
   const hist=getHistory();
   grid.innerHTML="";
-  UNITS.forEach(u=>{
+  units.forEach(u=>{
     const stats=hist.filter(h=>h.unitId===u.id);
     let best=null,last=null;
     stats.forEach(h=>{ if(!best||h.score/h.total>best.score/best.total) best=h; });
@@ -442,12 +520,14 @@ function renderHome(){
       </div>`;
     grid.appendChild(card);
   });
+  showScreen("term-screen");
 }
+
 function dirName(dir){ return dir==="c2e"?"中译英":"英译中"; }
 
 /* ============ 单元页 ============ */
 function openUnit(unitId){
-  const u=UNITS.find(x=>x.id===unitId);
+  const u=unitById(unitId);
   document.getElementById("unitTitle").textContent=`${u.icon} ${u.title} · ${u.theme}`;
   document.getElementById("unitInfo").textContent=`共 ${u.words.length} 个单词。选择测试方向后即可开始。`;
   document.getElementById("wordCount").textContent=u.words.length;
@@ -466,7 +546,7 @@ function openUnit(unitId){
 
 /* ============ 开始测试 ============ */
 function startTest(unitId,dir,customQuestions){
-  const u=UNITS.find(x=>x.id===unitId);
+  const u=unitById(unitId);
   let questions;
   if(customQuestions){ questions=customQuestions; }
   else{
@@ -674,6 +754,10 @@ document.getElementById("answerInput").addEventListener("keydown",e=>{
 document.getElementById("quitBtn").onclick=()=>{ if(confirm("确定退出本次测试吗？本次成绩不会记录。")){ test=null; showScreen("home-screen"); } };
 document.getElementById("goNotebook").onclick=()=>{ renderNotebook(); showScreen("notebook-screen"); };
 document.getElementById("goHome").onclick=()=>{ renderHome(); showScreen("home-screen"); };
+// 单元页"返回单元列表"按钮：回到当前学期页（或首页）
+document.getElementById("backToTermBtn").onclick=()=>{
+  if(currentTermKey){ openTerm(currentTermKey); } else { renderHome(); showScreen("home-screen"); }
+};
 document.getElementById("toNotebookBtn").onclick=()=>{ renderNotebook(); showScreen("notebook-screen"); };
 document.getElementById("homeBtn").onclick=()=>{ renderHome(); showScreen("home-screen"); };
 document.getElementById("retestWrongBtn").onclick=retestWrong;
