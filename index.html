@@ -84,7 +84,7 @@
   /* unit choice */
   .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-top:8px;}
   .panel h2{margin:0 0 4px;font-size:1.4rem;}
-  .dir-choices{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px;}
+  .dir-choices{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px;}
   .dir{
     border:2px solid #eef2f7;border-radius:18px;padding:22px;text-align:center;cursor:pointer;
     transition:transform .12s,border-color .2s,background .2s;background:#fff;
@@ -202,11 +202,6 @@
           <div class="big">🇨🇳 ➡️ 🇬🇧</div>
           <div class="t">中译英</div>
           <div class="d">看中文，拼写英文单词</div>
-        </div>
-        <div class="dir" id="dirE2C">
-          <div class="big">🇬🇧 ➡️ 🇨🇳</div>
-          <div class="t">英译中</div>
-          <div class="d">看英文，写出中文意思</div>
         </div>
       </div>
       <div class="opts">
@@ -430,23 +425,6 @@ function getHistory(){ return load(K_HIST,[]); }
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
 // 归一化英文答案：小写、去多余空格、去标点
 function normEn(s){ return (s||"").toLowerCase().replace(/[.!?，。！？、；;:：]/g,"").replace(/\s+/g," ").trim(); }
-// 归一化中文答案：去全部空格、去常见末尾标点
-function normCn(s){ return (s||"").replace(/\s+/g,"").replace(/[？！?!.。，,]+$/g,""); }
-// 由原始中文生成可接受的中文答案列表（去括注、按 ； 、 拆分、去“的”尾）
-function buildCnAnswers(cn){
-  let c = (cn||"")
-    .replace(/（[^）]*）/g,"").replace(/\([^)]*\)/g,"")   // 去掉括注（学科）等
-    .replace(/…+/g,"")                                     // 去省略号占位符
-    .replace(/[？?!！.。]/g,"");                            // 去末尾/句中标点
-  let parts = c.split(/[；;]/).map(x=>x.trim()).filter(Boolean);
-  let out=[];
-  parts.forEach(p=>{
-    out.push(p);
-    if(p.endsWith("的") && p.length>1) out.push(p.slice(0,-1)); // 聪明的->聪明
-  });
-  // 也允许带顿号的整串（如“农夫；农民”已拆，但“两次或三次”不会被拆，保留整体即可）
-  return Array.from(new Set(out));
-}
 
 /* ============ 状态 ============ */
 let test = null; // {unitTitle, dir, questions, idx, correct, wrong:[{en,cn,user,correct}], answered}
@@ -523,7 +501,7 @@ function openTerm(key){
   showScreen("term-screen");
 }
 
-function dirName(dir){ return dir==="c2e"?"中译英":"英译中"; }
+function dirName(dir){ return "中译英"; }
 
 /* ============ 单元页 ============ */
 function openUnit(unitId){
@@ -540,7 +518,6 @@ function openUnit(unitId){
     chips.appendChild(c);
   });
   document.getElementById("dirC2E").onclick=()=>startTest(unitId,"c2e");
-  document.getElementById("dirE2C").onclick=()=>startTest(unitId,"e2c");
   showScreen("unit-screen");
 }
 
@@ -575,25 +552,14 @@ function renderQuestion(){
   input.value=""; input.disabled=false;
   const submitBtn=document.getElementById("submitBtn");
   submitBtn.disabled=false; submitBtn.textContent="提交答案 ✅";
-  if(test.dir==="c2e"){
-    document.getElementById("qLabel").textContent="请写出对应的英文：";
-    document.getElementById("qWord").innerHTML=`${q.cn}<small>（输入英文）</small>`;
-    input.placeholder="type in English…";
-  }else{
-    document.getElementById("qLabel").textContent="请写出对应的中文：";
-    document.getElementById("qWord").innerHTML=`${q.en}<small>（输入中文意思）</small>`;
-    input.placeholder="请输入中文…";
-  }
+  document.getElementById("qLabel").textContent="请写出对应的英文：";
+  document.getElementById("qWord").innerHTML=`${q.cn}<small>（输入英文）</small>`;
+  input.placeholder="type in English…";
   setTimeout(()=>input.focus(),50);
 }
 
 function checkAnswer(q,user){
-  if(test.dir==="c2e"){
-    return normEn(user)===normEn(q.en);
-  }else{
-    const ua=normCn(user);
-    return buildCnAnswers(q.cn).some(a=>normCn(a)===ua);
-  }
+  return normEn(user)===normEn(q.en);
 }
 
 function submitAnswer(){
@@ -618,13 +584,12 @@ function submitAnswer(){
     fb.innerHTML=`<div class="fh">✅ 正确！</div>`;
     playCorrect();
   }else{
-    const correctShow = test.dir==="c2e" ? q.en : q.cn;
     fb.className="feedback no show";
     fb.innerHTML=`<div class="fh">❌ 答错了</div>
       <div class="fc">你的答案：<b style="color:var(--red-d)">${escapeHtml(user)}</b></div>
-      <div class="fc">正确答案：<b style="color:var(--green-d)">${escapeHtml(correctShow)}</b>
-        ${test.dir==="c2e"?`<br>中文：${escapeHtml(q.cn)}`:`<br>英文：${escapeHtml(q.en)}`}</div>`;
-    test.wrong.push({en:q.en,cn:q.cn,user:user,correct: test.dir==="c2e"?q.en:q.cn});
+      <div class="fc">正确答案：<b style="color:var(--green-d)">${escapeHtml(q.en)}</b>
+        <br>中文：${escapeHtml(q.cn)}</div>`;
+    test.wrong.push({en:q.en,cn:q.cn,user:user,correct:q.en});
     addWrong(q,user);
     playWrong();
   }
@@ -715,7 +680,7 @@ function renderNotebook(){
         </div>
       </div>
       <div class="row"><span class="ua">你的答案：${escapeHtml(it.lastUser)}</span></div>
-      <div class="row"><span class="ca">正确答案：${escapeHtml(it.dir==="c2e"?it.en:it.cn)}</span></div>
+      <div class="row"><span class="ca">正确答案：${escapeHtml(it.en)}</span></div>
     </div>`).join("");
 }
 function removeWrong(i){
@@ -725,16 +690,11 @@ function removeWrong(i){
 function retestWrong(){
   const list=getWrong();
   if(!list.length) return;
-  // 按方向分组测试（错题本可能含两个方向，取多数方向）
-  const byDir={c2e:[],e2c:[]};
-  list.forEach(it=>{ (byDir[it.dir]||(byDir[it.dir]=[])).push(it); });
-  const dir = byDir.c2e.length>=byDir.e2c.length ? "c2e" : "e2c";
-  const pool=(byDir[dir]||[]).slice();
+  const pool=list.slice();
   const questions=shuffle(pool).map(it=>({en:it.en,cn:it.cn}));
-  // 用一个虚拟单元标题
   test=null;
   document.getElementById("testTitle").textContent="📒 错题本重测";
-  startCustom(questions,dir);
+  startCustom(questions,"c2e");
 }
 function startCustom(questions,dir){
   test={ unitId:0, unitTitle:"📒 错题本重测", dir, questions, idx:0, correct:0, wrong:[], answered:false };
